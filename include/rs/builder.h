@@ -9,6 +9,8 @@
 
 namespace rs {
 
+// 构建器类
+// 通过对有序数据的一次遍历来构建一个 RadixSpline 
 // Allows building a `RadixSpline` in a single pass over sorted data.
 template <class KeyType>
 class Builder {
@@ -27,10 +29,13 @@ class Builder {
         prev_prefix_(0) {
     // Initialize radix table, needs to contain all prefixes up to the largest
     // key + 1.
+    // TODO: largest key + 1 如何理解？为何要 max_key-min_key?
+    // 初始化 radix_table，需要包含所有前缀，一直到最大的key+1
     const uint32_t max_prefix = (max_key - min_key) >> num_shift_bits_;
     radix_table_.resize(max_prefix + 2, 0);
   }
 
+  // 添加一个key; 假定keys存储在一个密集数组中
   // Adds a key. Assumes that keys are stored in a dense array.
   void AddKey(KeyType key) {
     if (curr_num_keys_ == 0) {
@@ -58,11 +63,21 @@ class Builder {
   }
 
  private:
+  // 获取需要移位的位数，基于最大key和最小key之间的差值 diff
+  // KeyType == uint32_t 时
   // Returns the number of shift bits based on the `diff` between the largest
   // and the smallest key. KeyType == uint32_t.
   static size_t GetNumShiftBits(uint32_t diff, size_t num_radix_bits) {
-    const uint32_t clz = __builtin_clz(diff);
-    if ((32 - clz) < num_radix_bits) return 0;
+    const uint32_t clz = __builtin_clz(diff);      // diff 二进制形式左起0的个数
+
+    // 32-clz 就把 diff 二进制形式中前面的0全去掉了，剩下的就是其有效位数
+    // 如 4 = 0b 0000 0000, 0000 0000, 0000 0000, 0000 0100; clz=29; 32-clz=3, 即4的有效位就是0b100中的后3位
+    // 再让有效位数跟前缀 num_radix_bits比较, 若有效位数比要求的前缀还少,即只有3位,却要求前缀是5位,显然是不可能的,故设为0
+    // 若有效位数超过了要求的前缀后,它俩的差值就是需要移位的位数；如：论文图1中的47183=0b 1011 1000 0100 1111, 32-clz=32-16=16; 且设置了前缀r=3，因此需要右移16-3=13位;
+    if ((32 - clz) < num_radix_bits)
+    {
+      return 0;
+    }
     return 32 - num_radix_bits - clz;
   }
   // KeyType == uint64_t.
@@ -74,9 +89,9 @@ class Builder {
 
   void AddKey(KeyType key, size_t position) {
     assert(key >= min_key_ && key <= max_key_);
-    // Keys need to be monotonically increasing.
+    // Keys need to be monotonically increasing. keys 需要单调递增
     assert(key >= prev_key_);
-    // Positions need to be strictly monotonically increasing.
+    // Positions need to be strictly monotonically increasing. positions 需要严格递增
     assert(position == 0 || position > prev_position_);
 
     PossiblyAddKeyToSpline(key, position);
@@ -217,8 +232,8 @@ class Builder {
 
   const KeyType min_key_;
   const KeyType max_key_;
-  const size_t num_radix_bits_;
-  const size_t num_shift_bits_;
+  const size_t num_radix_bits_;           // 前缀位数
+  const size_t num_shift_bits_;           // 需要移动的位数
   const size_t max_error_;
 
   std::vector<uint32_t> radix_table_;
@@ -230,6 +245,7 @@ class Builder {
   size_t prev_position_;
   KeyType prev_prefix_;
 
+  // TODO: 这两变量什么意思？
   // Current upper and lower limits on the error corridor of the spline.
   Coord<KeyType> upper_limit_;
   Coord<KeyType> lower_limit_;

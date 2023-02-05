@@ -9,6 +9,7 @@
 
 namespace rs {
 
+// std::multimap的直接替代品；在内部创建了一个有序的数据复本
 // A drop-in replacement for std::multimap. Internally creates a sorted copy of
 // the data.
 template <class KeyType, class ValueType>
