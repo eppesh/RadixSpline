@@ -296,6 +296,7 @@ void Run(const string& data_file, const string lookup_file) {
 }  // namespace
 
 int main(int argc, char** argv) {
+  std::cout << "bench main ..." << std::endl;
   if (argc != 3) {
     cerr << "usage: " << argv[0] << " <data_file> <lookup_file>" << endl;
     throw;
