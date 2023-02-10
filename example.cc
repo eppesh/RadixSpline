@@ -8,8 +8,9 @@ void RadixSplineExample() {
   std::cout << "Begin RadixSplineExample ...\n";
   // Create random keys.
   std::vector<uint64_t> keys(1e6);
+  //std::vector<uint64_t> keys(32);
   std::generate(keys.begin(), keys.end(), rand);
-  keys.push_back(81289);
+  keys.push_back(6329);
   std::sort(keys.begin(), keys.end());
 
   // Build RadixSpline.
@@ -23,12 +24,20 @@ void RadixSplineExample() {
   std::cout << "Keys.size()=" << keys.size() << "; " << std::endl;
 
   // Search using RadixSpline.
-  rs::SearchBound bound = rs.GetSearchBound(81289);
+  rs::SearchBound bound = rs.GetSearchBound(6329);
   std::cout << "The search key is in the range: [" << bound.begin << ", "
        << bound.end << ")" << std::endl;
+  for (size_t i = bound.begin; i <= bound.end; i++)
+  {
+    std::cout << "; " << keys[i] ;
+  }
+  std::cout << std::endl;
+  
   auto start = std::begin(keys) + bound.begin, last = std::begin(keys) + bound.end;
+  std::cout << "begin=" << *std::begin(keys) << "; start=" << *(std::begin(keys) + bound.begin)
+            << "; last=" << *(std::begin(keys) + bound.end) << std::endl;
   std::cout << "The key is at position: "
-       << std::lower_bound(start, last, 8128) - std::begin(keys) << std::endl;
+       << std::lower_bound(start, last, 6329) - std::begin(keys) << std::endl;
 }
 
 void MultiMapExample() {

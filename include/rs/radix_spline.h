@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <iostream>
 #include <vector>
 
 #include "common.h"
@@ -85,31 +86,28 @@ class RadixSpline {
   }
 
  private:
+  // 说明：该函数返回的index是指spline_points点中第一个大于等于key的点，因此区间(spline[index - 1], spline[index]]就是key左右最近的两个spline_points点
   // 获取样条点 spline point 的索引，该样条点标志着包含key的样条段的结束，其中 key 位于 (spline[index-1], spline[index])范围内
   // Returns the index of the spline point that marks the end of the spline
   // segment that contains the `key`: `key` ∈ (spline[index - 1], spline[index]]
   size_t GetSplineSegment(const KeyType key) const {
     // 使用 radix table 来缩小搜索范围
-    // TODO: 取前缀为何要让 key-min_key_? 移位的数值是多少？
     // Narrow search range using radix table.
     const KeyType prefix = (key - min_key_) >> num_shift_bits_;     // 取key的前缀:
     assert(prefix + 1 < radix_table_.size());
     // 对应论文中图1
-    // TODO: redix_table_中的值如何来的？看谁通过构造函数传进来的
     const uint32_t begin = radix_table_[prefix];
     const uint32_t end = radix_table_[prefix + 1];
 
     // 根据范围大小，选择线性查找或二分查找
-    // TODO: 阈值为何是32？Tlx里搜索时好像也有相关阈值。
     if (end - begin < 32) {
       // Do linear search over narrowed range. // 范围较小时，在已缩小的范围内直接进行线性查找
       uint32_t current = begin;
       while (spline_points_[current].x < key) 
       {
-        // TODO: 如果spline_points_中所有点都不等于key呢？那返回的也是第一个大于key的点
         ++current;
       }
-      return current;
+      return current;   // 这里找到了大于等于key的第一个点; std::lower_bound也是这个效果
     }
 
     // 范围超过32 使用二分查找
